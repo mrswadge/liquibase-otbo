@@ -1,0 +1,4 @@
+liquibase.ext.otbo.changes.ConvertViewsIntoMaterializedViewsGenerator
+liquibase.ext.otbo.changes.CreateFlexibleViewGenerator
+liquibase.ext.otbo.changes.DropFlexibleViewGenerator
+liquibase.ext.otbo.changes.DropColumnCascadeGenerator

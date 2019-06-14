@@ -1,0 +1,10 @@
+liquibase.ext.otbo.preconditions.OtboCheckConstraintExistsPrecondition
+liquibase.ext.otbo.preconditions.OtboColumnExistsPrecondition
+liquibase.ext.otbo.preconditions.OtboForeignKeyExistsPrecondition
+liquibase.ext.otbo.preconditions.OtboIndexExistsPrecondition
+liquibase.ext.otbo.preconditions.OtboMaterializedViewExistsPrecondition
+liquibase.ext.otbo.preconditions.OtboPrimaryKeyExistsPrecondition
+liquibase.ext.otbo.preconditions.OtboSequenceExistsPrecondition
+liquibase.ext.otbo.preconditions.OtboTableExistsPrecondition
+liquibase.ext.otbo.preconditions.OtboUniqueConstraintExistsPrecondition
+liquibase.ext.otbo.preconditions.OtboViewExistsPrecondition

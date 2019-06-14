@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.liquibase.org/xml/ns/dbchangelog-otbo-change" xmlns="http://www.liquibase.org/xml/ns/dbchangelog-otbo-change" elementFormDefault="qualified">
+
+	<!-- Create View -->
+	<xsd:element name="createFlexibleView">
+		<xsd:complexType>
+			<xsd:simpleContent>
+				<xsd:extension base="xsd:string">
+					<xsd:attribute name="viewName" type="xsd:string" use="required" />
+				</xsd:extension>
+			</xsd:simpleContent>
+		</xsd:complexType>
+	</xsd:element>
+
+	<!-- Drop View -->
+	<xsd:element name="dropFlexibleView">
+		<xsd:complexType>
+			<xsd:attribute name="viewName" type="xsd:string" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<!-- Upgrade Views to Materialized Views -->
+	<xsd:element name="convertViewsIntoMaterializedViews" />
+
+	<!-- Drop column including constraints where necessary -->
+	<xsd:element name="dropColumnCascade">
+		<xsd:complexType>
+			<xsd:attributeGroup ref="tableNameAttribute" />
+			<xsd:attribute name="columnName" type="xsd:string" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="addOrReplaceDefaultValue">
+		<xsd:complexType>
+			<xsd:attributeGroup ref="tableNameAttribute" />
+			<xsd:attribute name="columnName" type="xsd:string" use="required" />
+			<xsd:attribute name="columnDataType" type="xsd:string" />
+			<xsd:attribute name="defaultValue" type="xsd:string" />
+			<xsd:attribute name="defaultValueNumeric" type="xsd:string" />
+			<xsd:attribute name="defaultValueDate" type="xsd:string" />
+			<xsd:attribute name="defaultValueBoolean" type="xsd:string" />
+			<xsd:attribute name="defaultValueComputed" type="xsd:string" />
+			<xsd:attribute name="defaultValueSequenceNext" type="xsd:string" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:attributeGroup name="tableNameAttribute">
+		<xsd:attribute name="catalogName" type="xsd:string" />
+		<xsd:attribute name="schemaName" type="xsd:string" />
+		<xsd:attribute name="tableName" type="xsd:string" use="required" />
+	</xsd:attributeGroup>
+
+</xsd:schema>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+	targetNamespace="http://www.liquibase.org/xml/ns/dbchangelog-otbo-preconditions" 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog-otbo-preconditions" 
+	elementFormDefault="qualified">
+
+	<xsd:element name="otboCheckConstraintExists">
+		<xsd:complexType>
+			<xsd:attribute name="tableName" type="xsd:string" />
+			<xsd:attribute name="constraintName" type="xsd:string" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="otboColumnExists">
+		<xsd:complexType>
+			<xsd:attribute name="tableName" type="xsd:string" use="required" />
+			<xsd:attribute name="columnName" type="xsd:string" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="otboForeignKeyExists">
+		<xsd:complexType>
+			<xsd:attribute name="tableName" type="xsd:string" />
+			<xsd:attribute name="constraintName" type="xsd:string" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="otboIndexExists">
+		<xsd:complexType>
+			<xsd:attribute name="indexName" type="xsd:string" />
+			<xsd:attribute name="tableName" type="xsd:string" />
+			<xsd:attribute name="columnNames" type="xsd:string" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="otboPrimaryKeyExists">
+		<xsd:complexType>
+			<xsd:attribute name="primaryKeyName" type="xsd:string" />
+			<xsd:attribute name="tableName" type="xsd:string" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="otboSequenceExists">
+		<xsd:complexType>
+			<xsd:attribute name="sequenceName" type="xsd:string" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="otboTableExists">
+		<xsd:complexType>
+			<xsd:attribute name="tableName" type="xsd:string" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="otboUniqueConstraintExists">
+		<xsd:complexType>
+			<xsd:attribute name="tableName" type="xsd:string" />
+			<xsd:attribute name="constraintName" type="xsd:string" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="otboViewExists">
+		<xsd:complexType>
+			<xsd:attribute name="viewName" type="xsd:string" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="otboMaterializedViewExists">
+		<xsd:complexType>
+			<xsd:attribute name="viewName" type="xsd:string" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+</xsd:schema>

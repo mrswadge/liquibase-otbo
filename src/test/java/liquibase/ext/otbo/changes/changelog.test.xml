@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	xmlns:otbo="http://www.liquibase.org/xml/ns/dbchangelog-otbo-change" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-otbo-change ../../../../liquibase/ext/otbo/changes/xml/dbchangelog-ext.xsd
+											http://www.liquibase.org/xml/ns/dbchangelog ../../../../liquibase/ext/otbo/changes/xml/dbchangelog-3.2.xsd">
+
+	<!-- Do not rename tests, these names are fixed for test comparison. -->
+
+	<changeSet id="mytable" author="sbs">
+		<createTable tableName="mytable">
+			<column name="one" type="varchar2(30)"/>
+			<column name="two" type="varchar2(30)"/>
+		</createTable>
+		<insert tableName="mytable">
+			<column name="one" value="first"/>
+			<column name="two" value="second"/>
+		</insert>
+	</changeSet>
+
+	<changeSet id="mytabledb" author="sbs">
+		<createTable tableName="mytabledb">
+			<column name="one" type="varchar2(30)"/>
+			<column name="two" type="varchar2(30)"/>
+		</createTable>
+	</changeSet>
+ 
+	<changeSet id="myview1" author="sbs">
+		<otbo:createFlexibleView viewName="myview1">select 1 as One from dual</otbo:createFlexibleView>
+	</changeSet>
+
+	<changeSet id="myview2" author="sbs">
+		<otbo:createFlexibleView viewName="myview2">select * from mytable</otbo:createFlexibleView>
+	</changeSet>
+
+	<changeSet id="myview2.1" author="sbs">
+		<otbo:createFlexibleView viewName="myview2">select * from mytable where rownum = 1</otbo:createFlexibleView>
+	</changeSet>
+	
+	<changeSet id="drop myview1" author="sbs">
+		<otbo:dropFlexibleView viewName="myview1"/>
+	</changeSet>
+
+	<changeSet id="myview4" author="sbs">
+		<otbo:createFlexibleView viewName="myview4">select 1 as One from dual</otbo:createFlexibleView>
+	</changeSet>
+
+	<changeSet id="myview3" author="sbs">
+		<!-- Create a view -->
+		<otbo:createFlexibleView viewName="myview3">select * from mytable</otbo:createFlexibleView>
+		<!-- Upgrade the view to a materialized view -->
+		<otbo:convertViewsIntoMaterializedViews/>
+		<!-- This view should now be present as a real-time view and not as a materialized view -->
+		<otbo:createFlexibleView viewName="myview3">select * from mytable where one like '%'</otbo:createFlexibleView>
+	</changeSet>
+
+	<changeSet id="drop myview4" author="sbs">
+		<otbo:dropFlexibleView viewName="myview4"/>
+	</changeSet>
+
+</databaseChangeLog>

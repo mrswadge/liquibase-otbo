@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	xmlns:precondition="http://www.liquibase.org/xml/ns/dbchangelog-otbo-preconditions" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext ../../../../liquibase/ext/otbo/preconditions/xml/dbchangelog-ext.xsd
+											http://www.liquibase.org/xml/ns/dbchangelog ../../../../liquibase/ext/otbo/preconditions/xml/dbchangelog-3.2.xsd">
+
+	<changeSet id="emptytable" author="sbs">
+		<createTable tableName="emptytable">
+			<column name="dummy" type="varchar2(30)"/>
+		</createTable>
+	</changeSet>
+
+	<changeSet id="mytable" author="sbs">
+		<createTable tableName="mytable">
+			<column name="one" type="varchar2(30)"/>
+			<column name="two" type="varchar2(30)"/>
+			<column name="three" type="varchar2(30)"/>
+			<column name="four" type="varchar2(30)"/>
+			<column name="five" type="varchar2(30)"/>
+			<column name="six" type="varchar2(30)"/>
+			<column name="seven" type="varchar2(30)"/>
+			<column name="eight" type="varchar2(30)"/>
+		</createTable>
+		<addPrimaryKey tableName="mytable" columnNames="one,two" constraintName="myprimarykey"/>
+		<addUniqueConstraint tableName="mytable" columnNames="two,three,four"/>
+		<createIndex tableName="mytable" indexName="myindex">
+			<column name="one"/>
+			<column name="two"/>
+			<column name="three"/>
+		</createIndex>
+		<createTable tableName="myforeigntable">
+			<column name="alpha" type="varchar2(30)"/>
+			<column name="beta" type="varchar2(30)"/>
+			<column name="gamma" type="varchar2(30)"/>
+		</createTable>
+		<addPrimaryKey tableName="myforeigntable" columnNames="alpha,beta" constraintName="myforeignprimarykey"/>
+		<addForeignKeyConstraint constraintName="myforeignkey" referencedTableName="myforeigntable" referencedColumnNames="alpha,beta" baseTableName="mytable" baseColumnNames="one,two"/>
+		<createSequence sequenceName="mysequence" minValue="0" maxValue="100" startValue="0"/>
+	</changeSet>
+
+	<changeSet id="testresults" author="sbs">
+		<createTable tableName="testresults">
+			<column name="changeSetId" type="varchar2(30)"/>
+		</createTable>
+	</changeSet>
+
+	<changeSet id="myview" author="sbs">
+		<createView viewName="myview" replaceIfExists="true">select 1 as One from dual</createView>
+	</changeSet>
+
+	<!-- tables -->
+	
+	<changeSet id="iftableexists" author="sbs">
+		<preConditions>
+			<precondition:otboTableExists tableName="mytable"/>
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="iftableexists"/>
+		</insert>
+	</changeSet>
+
+	<changeSet id="iftablenotexists" author="sbs">
+		<preConditions onFail="CONTINUE">
+			<not>
+				<precondition:otboTableExists tableName="doesntexist"/>
+			</not>
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="iftablenotexists"/>
+		</insert>
+	</changeSet>
+
+	<!-- views -->
+	
+	<changeSet id="ifviewexists" author="sbs">
+		<preConditions>
+			<precondition:otboViewExists viewName="myview"/>
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="ifviewexists"/>
+		</insert>
+	</changeSet>
+
+	<changeSet id="ifviewnotexists" author="sbs">
+		<preConditions onFail="CONTINUE">
+			<not>
+				<precondition:otboViewExists viewName="doesntexist"/>
+			</not>
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="ifviewnotexists"/>
+		</insert>
+	</changeSet>
+	
+	<!-- indexes -->
+	
+	<changeSet id="ifindexexists1" author="sbs">
+		<preConditions>
+			<precondition:otboIndexExists indexName="myindex"/>
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="ifindexexists1"/>
+		</insert>
+	</changeSet>
+
+	<changeSet id="ifindexexists2" author="sbs">
+		<preConditions>
+			<precondition:otboIndexExists tableName="mytable" columnNames="one,two,three"/>
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="ifindexexists2"/>
+		</insert>
+	</changeSet>
+
+	<changeSet id="ifindexnotexists1" author="sbs">
+		<preConditions onFail="CONTINUE">
+			<not>
+				<precondition:otboViewExists viewName="doesntexist"/>
+			</not>
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="ifindexnotexists1"/>
+		</insert>
+	</changeSet>
+	
+	<!-- primary keys -->
+	
+	<changeSet id="ifpkexists" author="sbs">
+		<preConditions>
+			<precondition:otboPrimaryKeyExists tableName="mytable" primaryKeyName="myprimarykey"/>
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="ifpkexists"/>
+		</insert>
+	</changeSet>
+
+	<changeSet id="ifpknotexists" author="sbs">
+		<preConditions onFail="CONTINUE">
+			<not>
+				<precondition:otboPrimaryKeyExists tableName="emptytable" primaryKeyName="doesntexist"/>
+			</not>
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="ifpknotexists"/>
+		</insert>
+	</changeSet>
+
+	<!-- foreign keys -->
+	
+	<changeSet id="iffkexists" author="sbs">
+		<preConditions>
+			<precondition:otboForeignKeyExists tableName="mytable" constraintName="myforeignkey" />
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="iffkexists"/>
+		</insert>
+	</changeSet>
+	
+	<changeSet id="iffknotexists" author="sbs">
+		<preConditions>
+			<not>
+				<precondition:otboForeignKeyExists tableName="mytable" constraintName="doesntexist" />
+			</not>
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="iffknotexists"/>
+		</insert>
+	</changeSet>
+	
+	<!--  sequences -->
+	
+	<changeSet id="ifsequenceexists" author="sbs">
+		<preConditions>
+				<precondition:otboSequenceExists sequenceName="mysequence"/>
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="ifsequenceexists"/>
+		</insert>
+	</changeSet>
+	
+	<changeSet id="ifsequencenotexists" author="sbs">
+		<preConditions>
+			<not>
+				<precondition:otboSequenceExists sequenceName="doesntexist"/>
+			</not>
+		</preConditions>
+		<insert tableName="testresults">
+			<column name="changeSetId" value="ifsequencenotexists"/>
+		</insert>
+	</changeSet>
+	
+</databaseChangeLog>

@@ -11,7 +11,9 @@ import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
 import liquibase.changelog.visitor.ChangeExecListener;
 import liquibase.database.Database;
+import liquibase.database.OfflineConnection;
 import liquibase.database.core.MSSQLDatabase;
+import liquibase.database.core.OracleDatabase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.PreconditionErrorException;
@@ -68,6 +70,10 @@ public class OtboMaterializedViewExistsPrecondition extends OtboPrecondition<Pre
 	}
 	
 	public boolean check( Database database ) {
+		if ( database.getConnection() instanceof OfflineConnection ) {
+			return false;
+		}
+		
 		Precondition redirect = redirected( database );
 		if ( redirect == null ) {
 			JdbcConnection connection = (JdbcConnection) database.getConnection();

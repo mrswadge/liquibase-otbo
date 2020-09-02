@@ -13,6 +13,7 @@ import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
 import liquibase.changelog.visitor.ChangeExecListener;
 import liquibase.database.Database;
+import liquibase.database.OfflineConnection;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.PreconditionErrorException;
@@ -93,6 +94,10 @@ public class OtboIndexExistsPrecondition extends OtboPrecondition<IndexExistsPre
 	}
 
 	public void check( Database database, DatabaseChangeLog changeLog, ChangeSet changeSet, ChangeExecListener changeExecListener ) throws PreconditionFailedException, PreconditionErrorException {
+		if ( database.getConnection() instanceof OfflineConnection ) {
+			throw new PreconditionFailedException( String.format( "No index was found on table '%s.%s' with columns '%s'.", database.getLiquibaseSchemaName(), getTableName(), getColumnNames() ), changeLog, this );
+		}
+		
 		Precondition redirect = redirected( database );
 		if ( redirect == null ) {
 			JdbcConnection connection = (JdbcConnection) database.getConnection();

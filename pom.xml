@@ -7,7 +7,7 @@
 	<properties>
 		<oracle.version>12.2.0.1</oracle.version>
 		<slf4j.version>1.7.5</slf4j.version>
-		<junit.version>4.11</junit.version>
+		<junit.version>4.13.1</junit.version>
 		<liquibase.core.version>3.6.3</liquibase.core.version>
 		<liquibase.oracle.version>3.2</liquibase.oracle.version>
 	</properties>

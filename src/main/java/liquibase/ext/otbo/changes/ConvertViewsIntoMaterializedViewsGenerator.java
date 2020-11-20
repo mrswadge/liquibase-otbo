@@ -9,6 +9,7 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 
 import liquibase.database.Database;
+import liquibase.database.core.MSSQLDatabase;
 import liquibase.database.core.OracleDatabase;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.exception.ValidationErrors;
@@ -26,7 +27,7 @@ public class ConvertViewsIntoMaterializedViewsGenerator extends AbstractSqlGener
 	
 	@Override
 	public boolean supports( ConvertViewsIntoMaterializedViewsStatement statement, Database database ) {
-		return database instanceof OracleDatabase;
+		return database instanceof OracleDatabase || database instanceof MSSQLDatabase;
 	}
 
 	public ValidationErrors validate( ConvertViewsIntoMaterializedViewsStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain ) {
@@ -39,17 +40,24 @@ public class ConvertViewsIntoMaterializedViewsGenerator extends AbstractSqlGener
 		List<Sql> sqlList = new ArrayList<Sql>();
 		RawSqlGenerator rawSqlGen = new RawSqlGenerator();
 		
-		sql = readSqlFile( "liquibase/ext/otbo/changes/createViewConversionExcludesTable.sql" );
-		sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
-		
-		sql = readSqlFile( "liquibase/ext/otbo/changes/createViewDependencyGraphTempTable.sql" );
-		sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
-
-		sql = readSqlFile( "liquibase/ext/otbo/changes/convertViewsToMaterializedViews.sql" );
-		sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
-		
-		sql = readSqlFile( "liquibase/ext/otbo/changes/dropViewDependencyGraphTempTable.sql" );
-		sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
+		if ( database instanceof OracleDatabase ) {
+			sql = readSqlFile( "liquibase/ext/otbo/changes/createViewConversionExcludesTable.sql" );
+			sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
+			
+			sql = readSqlFile( "liquibase/ext/otbo/changes/createViewDependencyGraphTempTable.sql" );
+			sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
+	
+			sql = readSqlFile( "liquibase/ext/otbo/changes/convertViewsToMaterializedViews.sql" );
+			sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
+			
+			sql = readSqlFile( "liquibase/ext/otbo/changes/dropViewDependencyGraphTempTable.sql" );
+			sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
+		} else if ( database instanceof MSSQLDatabase ) {
+			sql = readSqlFile( "liquibase/ext/otbo/changes/convertViewsToMaterializedTables.sql" );
+			sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
+		} else {
+			throw new UnexpectedLiquibaseException( "Database is not supported." );
+		}
 
 		log.debug( sqlList.stream().map( new java.util.function.Function<Object, String>() {
 			public String apply( Object o ) {

@@ -27,7 +27,7 @@ import liquibase.statement.core.DropDefaultValueStatement;
 import liquibase.structure.core.Column;
 import liquibase.structure.core.Table;
 
-public class DropColumnCascadeGenerator extends AbstractSqlGenerator<DropColumnCascadeStatement> {
+public class DropColumnCascadeGenerator extends OtboSqlGenerator<DropColumnCascadeStatement> {
 
 	private static final Logger log = LogService.getLog( DropColumnCascadeGenerator.class );
 

@@ -1,5 +1,8 @@
 package liquibase.ext.otbo.changes;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -8,6 +11,8 @@ import java.util.stream.Collectors;
 import liquibase.database.Database;
 import liquibase.database.core.MSSQLDatabase;
 import liquibase.database.core.OracleDatabase;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.DatabaseException;
 import liquibase.exception.PreconditionErrorException;
 import liquibase.exception.PreconditionFailedException;
 import liquibase.exception.ValidationErrors;
@@ -25,6 +30,7 @@ import liquibase.sqlgenerator.core.CreateViewGenerator;
 import liquibase.sqlgenerator.core.DropTableGenerator;
 import liquibase.statement.core.CreateViewStatement;
 import liquibase.statement.core.DropTableStatement;
+import liquibase.util.SqlParser;
 
 public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexibleViewStatement> {
 	
@@ -64,7 +70,8 @@ public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexible
 		} // else if there is a view we will use "create or replace view"
 		
 		// if the view exists as a regular view already, we don't actually care.
-		CreateViewStatement createViewStmt = new CreateViewStatement( database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName(), statement.getViewName(), statement.getSelectQuery(), true );
+		String selectQuery = addSchemaPrefixToFunctionNames( statement.getSelectQuery(), database );
+		CreateViewStatement createViewStmt = new CreateViewStatement( database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName(), statement.getViewName(), selectQuery, true );
 
 		CreateViewGenerator createViewGen = new CreateViewGenerator();
 		sequel.addAll( Arrays.asList( createViewGen.generateSql( createViewStmt, database, null ) ) );
@@ -75,5 +82,34 @@ public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexible
 			} }  ).collect( Collectors.joining( "\n" ) ) );
 
 		return sequel.toArray( new Sql[0] );
+	}
+	
+	private String addSchemaPrefixToFunctionNames( String sql, Database database ) {
+		if ( database instanceof MSSQLDatabase && database.getConnection() instanceof JdbcConnection ) {
+			try {
+				Statement statement = ( (JdbcConnection) database.getConnection() ).createStatement();
+				ResultSet resultSet = statement.executeQuery( "SELECT NAME, SCHEMA_NAME(SCHEMA_ID) FROM SYS.OBJECTS WHERE TYPE = 'FN'" );
+				List parsedSql = Arrays.asList( SqlParser.parse( sql, true, true ).toArray( true ) );
+				while ( resultSet.next() ) {
+					String functionName = resultSet.getString( 1 );
+					String schemaName = resultSet.getString( 2 );
+					for ( int i = 0; i < parsedSql.size() - 2; i++ ) {
+						if ( parsedSql.get( i ).toString().equalsIgnoreCase( functionName ) ) {
+							Object next = parsedSql.get( i + 1 );
+							if ( next.toString().trim().equals( "" ) ) {
+								next = parsedSql.get( i + 2 );
+							}
+							if ( next.equals( "(" ) ) {
+								parsedSql.set( i, schemaName + "." + functionName );
+							}
+						}
+					}
+				}
+				return String.join( "", parsedSql );
+			} catch ( DatabaseException | SQLException e ) {
+				throw new RuntimeException( e );
+			}
+		}
+		return sql;
 	}
 }

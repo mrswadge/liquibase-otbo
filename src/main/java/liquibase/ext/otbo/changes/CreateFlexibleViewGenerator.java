@@ -88,22 +88,61 @@ public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexible
 		if ( database instanceof MSSQLDatabase && database.getConnection() instanceof JdbcConnection ) {
 			try {
 				Statement statement = ( (JdbcConnection) database.getConnection() ).createStatement();
-				ResultSet resultSet = statement.executeQuery( "SELECT NAME, SCHEMA_NAME(SCHEMA_ID) FROM SYS.OBJECTS WHERE TYPE = 'FN'" );
+				ResultSet resultSet = statement.executeQuery( "SELECT NAME, SCHEMA_NAME(SCHEMA_ID), "
+						+ "(SELECT MAX(PARAMETER_ID) FROM SYS.PARAMETERS P WHERE P.OBJECT_ID = O.OBJECT_ID) "
+						+ "FROM SYS.OBJECTS O WHERE TYPE = 'FN'" );
 				List parsedSql = Arrays.asList( SqlParser.parse( sql, true, true ).toArray( true ) );
+				Map<Integer, List<String>> schemaMap = new HashMap<>();
 				while ( resultSet.next() ) {
 					String functionName = resultSet.getString( 1 );
 					String schemaName = resultSet.getString( 2 );
+					int parameterCount = resultSet.getInt( 3 );
 					for ( int i = 0; i < parsedSql.size() - 2; i++ ) {
 						if ( parsedSql.get( i ).toString().equalsIgnoreCase( functionName ) ) {
-							Object next = parsedSql.get( i + 1 );
-							if ( next.toString().trim().equals( "" ) ) {
-								next = parsedSql.get( i + 2 );
+							int b = 0;
+							int p = -1;
+							for ( int j = i + 1; j < parsedSql.size(); j++ ) {
+								Object next = parsedSql.get( j );
+								if ( next.toString().trim().equals( "" ) ) {
+									continue;
+								} else if ( next.equals( "(" ) ) {
+									b++;
+								} else if ( next.equals( ")" ) ) {
+									b--;
+								} else if ( next.equals( "," ) && b == 1 ) {
+									p++;
+								}
+								if ( b < 1 ) {
+									break;
+								} else if ( p < 1 ) {
+									p++;
+								}
 							}
-							if ( next.equals( "(" ) ) {
-								parsedSql.set( i, schemaName + "." + functionName );
+							if ( p == parameterCount ) {
+								if ( !schemaMap.containsKey( i ) ) {
+									schemaMap.put( i, new ArrayList<>() );
+								}
+								schemaMap.get( i ).add( schemaName );
 							}
 						}
 					}
+				}
+				for ( Entry<Integer, List<String>> entry : schemaMap.entrySet() ) {
+					int i = entry.getKey();
+					List<String> schemaList = entry.getValue();
+					String functionName = parsedSql.get( i ).toString();
+					String schemaName = schemaList.get( 0 );
+					if ( schemaList.size() > 1 ) {
+						for ( String s : schemaList ) {
+							if ( s.equalsIgnoreCase( "opentwins" ) ) {
+								schemaName = s;
+								break;
+							} else if ( s.equalsIgnoreCase( database.getLiquibaseSchemaName() ) ) {
+								schemaName = s;
+							}
+						}
+					}
+					parsedSql.set( i, "[" + schemaName + "].[" + functionName + "]" );
 				}
 				return String.join( "", parsedSql );
 			} catch ( DatabaseException | SQLException e ) {

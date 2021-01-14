@@ -28,6 +28,12 @@ public class CreateFunctionGenerator extends AbstractSqlGenerator<CreateFunction
 		String sql = statement.getFunctionBody();
 		
 		if ( database instanceof MSSQLDatabase ) {
+			String objectName = "[" + statement.getFunctionName() + "]";
+			
+			if ( statement.getSchemaName() != null ) {
+				objectName = "[" + statement.getSchemaName() + "]." + objectName;
+			}
+			
 			StringClauses parsedSql = SqlParser.parse( sql, true, true );
 			ClauseIterator clauseIter = parsedSql.getClauseIterator();
 			Object next = "START";
@@ -39,7 +45,7 @@ public class CreateFunctionGenerator extends AbstractSqlGenerator<CreateFunction
 			clauseIter.replace( "ALTER" );
 			String createSql = sql.replace( "'", "''" );
 			String alterSql = parsedSql.toString().replace( "'", "''" );
-			sql = "IF OBJECT_ID('" + statement.getFunctionName() + "') IS NULL EXEC ('" + createSql + "') ELSE EXEC ('" + alterSql + "')";
+			sql = "IF OBJECT_ID('" + objectName + "') IS NULL EXEC ('" + createSql + "') ELSE EXEC ('" + alterSql + "')";
 		}
 		
 		return new Sql[] { new UnparsedSql( sql ) };

@@ -8,14 +8,23 @@ import liquibase.database.Database;
 import liquibase.statement.SqlStatement;
 
 @DatabaseChange(
-				name = "dropFunction",
-				description = "Drops an existing function",
-				priority = ChangeMetaData.PRIORITY_DEFAULT )
+		name = "dropFunction",
+		description = "Drops an existing function",
+		priority = ChangeMetaData.PRIORITY_DEFAULT )
 public class DropFunctionChange extends AbstractChange {
+	private String schemaName;
 	private String functionName;
 	
+	public String getSchemaName() {
+		return schemaName;
+	}
+	
+	public void setSchemaName( String schemaName ) {
+		this.schemaName = schemaName;
+	}
+	
 	@DatabaseChangeProperty(
-					description = "Name of the function to drop" )
+			description = "Name of the function to drop" )
 	public String getFunctionName() {
 		return functionName;
 	}
@@ -29,6 +38,6 @@ public class DropFunctionChange extends AbstractChange {
 	}
 	
 	public SqlStatement[] generateStatements( Database database ) {
-		return new SqlStatement[] { new DropFunctionStatement( getFunctionName() ) };
+		return new SqlStatement[] { new DropFunctionStatement( getSchemaName(), getFunctionName() ) };
 	}
 }

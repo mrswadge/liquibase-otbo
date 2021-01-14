@@ -21,6 +21,16 @@ public class DropFunctionGenerator extends AbstractSqlGenerator<DropFunctionStat
 	}
 	
 	public Sql[] generateSql( DropFunctionStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain ) {
-		return new Sql[] { new UnparsedSql( "DROP FUNCTION " + statement.getFunctionName() ) };
+		String objectName = statement.getFunctionName();
+		
+		if ( database instanceof MSSQLDatabase ) {
+			objectName = "[" + objectName + "]";
+			
+			if ( statement.getSchemaName() != null ) {
+				objectName = "[" + statement.getSchemaName() + "]." + objectName;
+			}
+		}
+		
+		return new Sql[] { new UnparsedSql( "DROP FUNCTION " + objectName ) };
 	}
 }

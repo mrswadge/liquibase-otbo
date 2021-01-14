@@ -8,15 +8,24 @@ import liquibase.database.Database;
 import liquibase.statement.SqlStatement;
 
 @DatabaseChange(
-				name = "createFunction",
-				description = "Creates a new function",
-				priority = ChangeMetaData.PRIORITY_DEFAULT )
+		name = "createFunction",
+		description = "Creates a new function",
+		priority = ChangeMetaData.PRIORITY_DEFAULT )
 public class CreateFunctionChange extends AbstractChange {
+	private String schemaName;
 	private String functionName;
 	private String functionBody;
 	
+	public String getSchemaName() {
+		return schemaName;
+	}
+	
+	public void setSchemaName( String schemaName ) {
+		this.schemaName = schemaName;
+	}
+	
 	@DatabaseChangeProperty(
-					description = "Name of the function to create" )
+			description = "Name of the function to create" )
 	public String getFunctionName() {
 		return functionName;
 	}
@@ -26,7 +35,7 @@ public class CreateFunctionChange extends AbstractChange {
 	}
 	
 	@DatabaseChangeProperty(
-					serializationType = SerializationType.DIRECT_VALUE )
+			serializationType = SerializationType.DIRECT_VALUE )
 	public String getFunctionBody() {
 		return functionBody;
 	}
@@ -40,6 +49,6 @@ public class CreateFunctionChange extends AbstractChange {
 	}
 	
 	public SqlStatement[] generateStatements( Database database ) {
-		return new SqlStatement[] { new CreateFunctionStatement( getFunctionName(), getFunctionBody() ) };
+		return new SqlStatement[] { new CreateFunctionStatement( getSchemaName(), getFunctionName(), getFunctionBody() ) };
 	}
 }

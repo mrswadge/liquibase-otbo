@@ -1,13 +1,21 @@
 package liquibase.ext.otbo.changes;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import liquibase.database.Database;
 import liquibase.database.core.MSSQLDatabase;
 import liquibase.database.core.OracleDatabase;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.DatabaseException;
 import liquibase.exception.PreconditionErrorException;
 import liquibase.exception.PreconditionFailedException;
 import liquibase.exception.ValidationErrors;
@@ -25,6 +33,7 @@ import liquibase.sqlgenerator.core.CreateViewGenerator;
 import liquibase.sqlgenerator.core.DropTableGenerator;
 import liquibase.statement.core.CreateViewStatement;
 import liquibase.statement.core.DropTableStatement;
+import liquibase.util.SqlParser;
 
 public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexibleViewStatement> {
 	
@@ -64,7 +73,8 @@ public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexible
 		} // else if there is a view we will use "create or replace view"
 		
 		// if the view exists as a regular view already, we don't actually care.
-		CreateViewStatement createViewStmt = new CreateViewStatement( database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName(), statement.getViewName(), statement.getSelectQuery(), true );
+		String selectQuery = addSchemaPrefixToFunctionNames( statement.getSelectQuery(), database );
+		CreateViewStatement createViewStmt = new CreateViewStatement( database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName(), statement.getViewName(), selectQuery, true );
 
 		CreateViewGenerator createViewGen = new CreateViewGenerator();
 		sequel.addAll( Arrays.asList( createViewGen.generateSql( createViewStmt, database, null ) ) );
@@ -75,5 +85,73 @@ public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexible
 			} }  ).collect( Collectors.joining( "\n" ) ) );
 
 		return sequel.toArray( new Sql[0] );
+	}
+	
+	private String addSchemaPrefixToFunctionNames( String sql, Database database ) {
+		if ( database instanceof MSSQLDatabase && database.getConnection() instanceof JdbcConnection ) {
+			try {
+				Statement statement = ( (JdbcConnection) database.getConnection() ).createStatement();
+				ResultSet resultSet = statement.executeQuery( "SELECT NAME, SCHEMA_NAME(SCHEMA_ID), "
+						+ "(SELECT MAX(PARAMETER_ID) FROM SYS.PARAMETERS P WHERE P.OBJECT_ID = O.OBJECT_ID) "
+						+ "FROM SYS.OBJECTS O WHERE TYPE = 'FN'" );
+				List parsedSql = Arrays.asList( SqlParser.parse( sql, true, true ).toArray( true ) );
+				Map<Integer, List<String>> schemaMap = new HashMap<>();
+				while ( resultSet.next() ) {
+					String functionName = resultSet.getString( 1 );
+					String schemaName = resultSet.getString( 2 );
+					int parameterCount = resultSet.getInt( 3 );
+					for ( int i = 0; i < parsedSql.size() - 2; i++ ) {
+						if ( parsedSql.get( i ).toString().equalsIgnoreCase( functionName ) ) {
+							int b = 0;
+							int p = -1;
+							for ( int j = i + 1; j < parsedSql.size(); j++ ) {
+								Object next = parsedSql.get( j );
+								if ( next.toString().trim().equals( "" ) ) {
+									continue;
+								} else if ( next.equals( "(" ) ) {
+									b++;
+								} else if ( next.equals( ")" ) ) {
+									b--;
+								} else if ( next.equals( "," ) && b == 1 ) {
+									p++;
+								}
+								if ( b < 1 ) {
+									break;
+								} else if ( p < 1 ) {
+									p++;
+								}
+							}
+							if ( p == parameterCount ) {
+								if ( !schemaMap.containsKey( i ) ) {
+									schemaMap.put( i, new ArrayList<>() );
+								}
+								schemaMap.get( i ).add( schemaName );
+							}
+						}
+					}
+				}
+				for ( Entry<Integer, List<String>> entry : schemaMap.entrySet() ) {
+					int i = entry.getKey();
+					List<String> schemaList = entry.getValue();
+					String functionName = parsedSql.get( i ).toString();
+					String schemaName = schemaList.get( 0 );
+					if ( schemaList.size() > 1 ) {
+						for ( String s : schemaList ) {
+							if ( s.equalsIgnoreCase( "opentwins" ) ) {
+								schemaName = s;
+								break;
+							} else if ( s.equalsIgnoreCase( database.getLiquibaseSchemaName() ) ) {
+								schemaName = s;
+							}
+						}
+					}
+					parsedSql.set( i, "[" + schemaName + "].[" + functionName + "]" );
+				}
+				return String.join( "", parsedSql );
+			} catch ( DatabaseException | SQLException e ) {
+				throw new RuntimeException( e );
+			}
+		}
+		return sql;
 	}
 }

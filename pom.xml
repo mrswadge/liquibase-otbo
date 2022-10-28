@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>liquibase.ext.otbo</groupId>
 	<artifactId>liquibase-otbo</artifactId>
-	<version>3.6.3.4</version>
+	<version>3.6.3.5</version>
 
 	<properties>
 		<oracle.version>12.2.0.1</oracle.version>

@@ -13,12 +13,20 @@ begin
 	declare @tableFQN as varchar(max);
 	declare @viewFQN as varchar(max);
 	declare @sql as varchar(max);
-
+	declare @startTime as DATETIME;
+	declare @endTime as DATETIME;
+	declare @diff as DATETIME;
+	
+	set @startTime = CURRENT_TIMESTAMP;
 	set @tableName = convert(varchar(max), floor(rand()*9000+1000) ) + 'mv_' + @viewName;
 	set @tableFQN = '[' + @schemaName + '].[' + @tableName + ']';
 	set @viewFQN = '[' + @schemaName + '].[' + @viewName + ']';
 	
 	exec('select * into ' + @tableFQN + ' from ' + @viewFQN);
+	
+	set @endTime = CURRENT_TIMESTAMP;
+	set @diff = @endTime - @startTime;
+	
 	-- Add an extended property to the table so that we have a chance of identifying which tables are 
 	-- materializations of views.
 	exec sp_addextendedproperty 
@@ -26,7 +34,21 @@ begin
 		@value = 'True',
 		@level0type = N'SCHEMA', @level0name = @schemaName,  
 		@level1type = N'TABLE',  @level1name = @tableName;  
-
+	exec sp_addextendedproperty 
+		@name = N'StartTime', 
+		@value =  @startTime,
+		@level0type = N'SCHEMA', @level0name = @schemaName,  
+		@level1type = N'TABLE',  @level1name = @tableName;  
+	exec sp_addextendedproperty 
+		@name = N'EndTime', 
+		@value = @endTime,
+		@level0type = N'SCHEMA', @level0name = @schemaName,  
+		@level1type = N'TABLE',  @level1name = @tableName;  
+	exec sp_addextendedproperty 
+		@name = N'MaterializationTime', 
+		@value = @diff,
+		@level0type = N'SCHEMA', @level0name = @schemaName,  
+		@level1type = N'TABLE',  @level1name = @tableName;  
 	exec('drop view ' + @viewFQN);
 	exec sp_rename @objname = @tableFQN, @newname = @viewName;
 

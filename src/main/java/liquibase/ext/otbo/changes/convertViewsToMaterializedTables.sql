@@ -22,7 +22,9 @@ begin
 	set @tableFQN = '[' + @schemaName + '].[' + @tableName + ']';
 	set @viewFQN = '[' + @schemaName + '].[' + @viewName + ']';
 	
+	exec('BEGIN TRANSACTION');
 	exec('select * into ' + @tableFQN + ' from ' + @viewFQN);
+	exec('COMMIT TRANSACTION');
 	
 	set @endTime = CURRENT_TIMESTAMP;
 	set @diff = @endTime - @startTime;

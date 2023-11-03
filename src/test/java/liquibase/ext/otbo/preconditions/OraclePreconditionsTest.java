@@ -2,53 +2,16 @@ package liquibase.ext.otbo.preconditions;
 
 import static org.junit.Assert.*;
 
-import java.net.URL;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import liquibase.Contexts;
-import liquibase.change.Change;
-import liquibase.change.ChangeFactory;
-import liquibase.change.ChangeMetaData;
-import liquibase.changelog.ChangeLogHistoryService;
-import liquibase.changelog.ChangeLogHistoryServiceFactory;
-import liquibase.changelog.ChangeLogParameters;
-import liquibase.changelog.ChangeSet;
-import liquibase.changelog.DatabaseChangeLog;
-import liquibase.database.Database;
-import liquibase.database.core.OracleDatabase;
-import liquibase.exception.RollbackFailedException;
+import liquibase.Scope;
 import liquibase.executor.Executor;
 import liquibase.executor.ExecutorService;
-import liquibase.ext.otbo.preconditions.OtboCheckConstraintExistsPrecondition;
-import liquibase.ext.otbo.preconditions.OtboColumnExistsPrecondition;
-import liquibase.ext.otbo.preconditions.OtboForeignKeyExistsPrecondition;
-import liquibase.ext.otbo.preconditions.OtboIndexExistsPrecondition;
-import liquibase.ext.otbo.preconditions.OtboMaterializedViewExistsPrecondition;
-import liquibase.ext.otbo.preconditions.OtboPrimaryKeyExistsPrecondition;
-import liquibase.ext.otbo.preconditions.OtboSequenceExistsPrecondition;
-import liquibase.ext.otbo.preconditions.OtboTableExistsPrecondition;
-import liquibase.ext.otbo.preconditions.OtboUniqueConstraintExistsPrecondition;
-import liquibase.ext.otbo.preconditions.OtboViewExistsPrecondition;
-import liquibase.ext.otbo.preconditions.core.BaseTestCase;
-import liquibase.parser.ChangeLogParserFactory;
+import liquibase.ext.otbo.test.BaseTestCase;
 import liquibase.precondition.Precondition;
 import liquibase.precondition.PreconditionFactory;
-import liquibase.resource.ClassLoaderResourceAccessor;
-import liquibase.resource.ResourceAccessor;
-import liquibase.sql.Sql;
-import liquibase.sqlgenerator.SqlGeneratorFactory;
-import liquibase.statement.SqlStatement;
 import liquibase.statement.core.RawSqlStatement;
-import liquibase.util.FileUtil;
-
-import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -59,7 +22,7 @@ public class OraclePreconditionsTest extends BaseTestCase {
 		changeLogFile = "liquibase/ext/otbo/preconditions/changelog.test.xml";
 		connectToDB();
 		cleanDB();
-		liquiBase.update( (String) null );
+		update();
 	}
 
 	@Test
@@ -70,7 +33,7 @@ public class OraclePreconditionsTest extends BaseTestCase {
 				"ifpknotexists", "iffkexists", "iffknotexists", "ifsequenceexists",
 				"ifsequencenotexists"
 		);
-		Executor executor = ExecutorService.getInstance().getExecutor( liquiBase.getDatabase() );
+		Executor executor = Scope.getCurrentScope().getSingleton( ExecutorService.class ).getExecutor( "jdbc", liquiBase.getDatabase() );
 		List<String> successes = executor.queryForList( new RawSqlStatement( "select * from testresults" ), String.class );
 		assertTrue( successes.containsAll( expected ) );
 	}
@@ -90,8 +53,8 @@ public class OraclePreconditionsTest extends BaseTestCase {
 		checkRegistry( preconditions, OtboViewExistsPrecondition.class );
 	}
 
-	private void checkRegistry( Map<String, Class<? extends Precondition>> registry, Class<? extends Precondition> clazz ) throws InstantiationException, IllegalAccessException {
-		Precondition precondition = clazz.newInstance();
+	private void checkRegistry( Map<String, Class<? extends Precondition>> registry, Class<? extends Precondition> clazz ) throws Exception {
+		Precondition precondition = clazz.getConstructor().newInstance();
 		String name = precondition.getName();
 		Class<? extends Precondition> mappedClazz = registry.get( name );
 		assertEquals( clazz, mappedClazz );

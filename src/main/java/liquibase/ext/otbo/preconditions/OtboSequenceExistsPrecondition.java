@@ -40,8 +40,8 @@ public class OtboSequenceExistsPrecondition extends OtboPrecondition<SequenceExi
 	@Override
 	protected SequenceExistsPrecondition fallback( Database database ) {
 		SequenceExistsPrecondition fallback = new SequenceExistsPrecondition();
-		fallback.setCatalogName( database.getLiquibaseCatalogName() );
-		fallback.setSchemaName( database.getLiquibaseSchemaName() );
+		fallback.setCatalogName( database.getDefaultCatalogName() );
+		fallback.setSchemaName( database.getDefaultSchemaName() );
 		fallback.setSequenceName( getSequenceName() );
 		return fallback;
 	}
@@ -66,7 +66,7 @@ public class OtboSequenceExistsPrecondition extends OtboPrecondition<SequenceExi
 
 	public void check( Database database, DatabaseChangeLog changeLog, ChangeSet changeSet, ChangeExecListener changeExecListener ) throws PreconditionFailedException, PreconditionErrorException {
 		if ( database.getConnection() instanceof OfflineConnection ) {
-			throw new PreconditionFailedException( String.format( "The sequence '%s.%s' was not found.", database.getLiquibaseSchemaName(), getSequenceName() ), changeLog, this );
+			throw new PreconditionFailedException( String.format( "The sequence '%s.%s' was not found.", database.getDefaultSchemaName(), getSequenceName() ), changeLog, this );
 		}
 		
 		Precondition redirect = redirected( database );
@@ -78,10 +78,10 @@ public class OtboSequenceExistsPrecondition extends OtboPrecondition<SequenceExi
 				final String sql = "select count(*) from all_sequences where upper(sequence_name) = upper(?) and upper(sequence_owner) = upper(?)";
 				ps = connection.prepareStatement( sql );
 				ps.setString( 1, getSequenceName() );
-				ps.setString( 2, database.getLiquibaseSchemaName() );
+				ps.setString( 2, database.getDefaultSchemaName() );
 				rs = ps.executeQuery();
 				if ( !rs.next() || rs.getInt( 1 ) <= 0 ) {
-					throw new PreconditionFailedException( String.format( "The sequence '%s.%s' was not found.", database.getLiquibaseSchemaName(), getSequenceName() ), changeLog, this );
+					throw new PreconditionFailedException( String.format( "The sequence '%s.%s' was not found.", database.getDefaultSchemaName(), getSequenceName() ), changeLog, this );
 				}
 			} catch ( SQLException e ) {
 				throw new PreconditionErrorException( e, changeLog, this );

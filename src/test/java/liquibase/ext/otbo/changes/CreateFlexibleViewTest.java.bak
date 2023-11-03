@@ -176,6 +176,7 @@ public class CreateFlexibleViewTest extends BaseTestCase {
 			viewExists.check( liquiBase.getDatabase(), null, null, null );
 			return true;
 		} catch ( PreconditionFailedException e ) {
+			// e.printStackTrace();
 			return false;
 		} catch ( PreconditionErrorException e ) {
 			throw new RuntimeException( e );
@@ -198,6 +199,7 @@ public class CreateFlexibleViewTest extends BaseTestCase {
 			tableExists.check( liquiBase.getDatabase(), null, null, null );
 			return true;
 		} catch ( PreconditionFailedException e ) {
+			// e.printStackTrace();
 			return false;
 		} catch ( PreconditionErrorException e ) {
 			throw new RuntimeException( e );

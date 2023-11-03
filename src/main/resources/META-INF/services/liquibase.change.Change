@@ -3,3 +3,5 @@ liquibase.ext.otbo.changes.ConvertViewsIntoMaterializedViewsChange
 liquibase.ext.otbo.changes.CreateFlexibleViewChange
 liquibase.ext.otbo.changes.DropFlexibleViewChange
 liquibase.ext.otbo.changes.DropColumnCascadeChange
+liquibase.ext.otbo.changes.CreateFunctionChange
+liquibase.ext.otbo.changes.DropFunctionChange

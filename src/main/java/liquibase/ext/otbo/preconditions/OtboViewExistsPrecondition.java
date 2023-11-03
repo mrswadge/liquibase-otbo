@@ -58,15 +58,15 @@ public class OtboViewExistsPrecondition extends OtboPrecondition<ViewExistsPreco
 	@Override
 	protected ViewExistsPrecondition fallback( Database database ) {
 		ViewExistsPrecondition fallback = new ViewExistsPrecondition();
-		fallback.setCatalogName( database.getLiquibaseCatalogName() );
-		fallback.setSchemaName( database.getLiquibaseSchemaName() );
+		fallback.setCatalogName( database.getDefaultCatalogName() );
+		fallback.setSchemaName( database.getDefaultSchemaName() );
 		fallback.setViewName( getViewName() );
 		return fallback;
 	}
 	
 	public void check( Database database, DatabaseChangeLog changeLog, ChangeSet changeSet, ChangeExecListener changeExecListener ) throws PreconditionFailedException, PreconditionErrorException {
 		if ( database.getConnection() instanceof OfflineConnection ) {
-			throw new PreconditionFailedException( String.format( "The view '%s.%s' was not found.", database.getLiquibaseSchemaName(), getViewName() ), changeLog, this );
+			throw new PreconditionFailedException( String.format( "The view '%s.%s' was not found.", database.getDefaultSchemaName(), getViewName() ), changeLog, this );
 		}
 		
 		Precondition redirect = redirected( database );
@@ -78,10 +78,10 @@ public class OtboViewExistsPrecondition extends OtboPrecondition<ViewExistsPreco
 				final String sql = "select count(*) from all_views where upper(view_name) = upper(?) and upper(owner) = upper(?)";
 				ps = connection.prepareStatement( sql );
 				ps.setString( 1, getViewName() );
-				ps.setString( 2, database.getLiquibaseSchemaName() );
+				ps.setString( 2, database.getDefaultSchemaName() );
 				rs = ps.executeQuery();
 				if ( !rs.next() || rs.getInt( 1 ) <= 0 ) {
-					throw new PreconditionFailedException( String.format( "The view '%s.%s' was not found.", database.getLiquibaseSchemaName(), getViewName() ), changeLog, this );
+					throw new PreconditionFailedException( String.format( "The view '%s.%s' was not found.", database.getDefaultSchemaName(), getViewName() ), changeLog, this );
 				}
 			} catch ( SQLException e ) {
 				throw new PreconditionErrorException( e, changeLog, this );

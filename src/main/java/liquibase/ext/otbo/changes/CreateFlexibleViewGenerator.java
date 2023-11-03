@@ -11,24 +11,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import liquibase.Scope;
 import liquibase.database.Database;
 import liquibase.database.core.MSSQLDatabase;
 import liquibase.database.core.OracleDatabase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
-import liquibase.exception.PreconditionErrorException;
-import liquibase.exception.PreconditionFailedException;
 import liquibase.exception.ValidationErrors;
 import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewGenerator;
 import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewStatement;
-import liquibase.ext.otbo.preconditions.OtboMaterializedViewExistsPrecondition;
-import liquibase.ext.otbo.preconditions.OtboTableExistsPrecondition;
-import liquibase.logging.LogService;
 import liquibase.logging.Logger;
-import liquibase.precondition.core.TableExistsPrecondition;
 import liquibase.sql.Sql;
 import liquibase.sqlgenerator.SqlGeneratorChain;
-import liquibase.sqlgenerator.core.AbstractSqlGenerator;
 import liquibase.sqlgenerator.core.CreateViewGenerator;
 import liquibase.sqlgenerator.core.DropTableGenerator;
 import liquibase.statement.core.CreateViewStatement;
@@ -37,14 +31,14 @@ import liquibase.util.SqlParser;
 
 public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexibleViewStatement> {
 	
-	private static final Logger log = LogService.getLog(CreateFlexibleViewGenerator.class);
+	private static final Logger log = Scope.getCurrentScope().getLog(CreateFlexibleViewGenerator.class);
 	
 	@Override
 	public boolean supports( CreateFlexibleViewStatement statement, Database database ) {
 		return database instanceof OracleDatabase || database instanceof MSSQLDatabase;
 	}
 
-	public ValidationErrors validate( CreateFlexibleViewStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain ) {
+	public ValidationErrors validate( CreateFlexibleViewStatement statement, Database database, SqlGeneratorChain<CreateFlexibleViewStatement> sqlGeneratorChain ) {
 		ValidationErrors validationErrors = new ValidationErrors();
 		validationErrors.checkRequiredField( "viewName", statement.getViewName() );
 		validationErrors.checkRequiredField( "selectQuery", statement.getSelectQuery() );
@@ -56,30 +50,30 @@ public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexible
 	 * 2. We can then can create the standard view: 'create or replace force view as ... select 1 from dual' 
 	 * 3. If the environment is set for materialized views, convert all views to materialized views (oracle) or tables (mssql) at the end using the v99.99.99 script.
 	 */
-	public Sql[] generateSql( CreateFlexibleViewStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain ) {
+	public Sql[] generateSql( CreateFlexibleViewStatement statement, Database database, SqlGeneratorChain<CreateFlexibleViewStatement> sqlGeneratorChain ) {
 		// check if the view already exists, then formulate a plan from there!
 		String viewName = statement.getViewName().toUpperCase();
 		List<Sql> sequel = new ArrayList<Sql>();
 
 		if ( materializedViewExists( viewName, database ) ) {
 			DropMaterializedViewStatement dropMViewStmt = new DropMaterializedViewStatement( statement.getViewName() );
-			dropMViewStmt.setSchemaName( database.getLiquibaseSchemaName() );
+			dropMViewStmt.setSchemaName( database.getDefaultSchemaName() );
 			DropMaterializedViewGenerator dropMViewGen = new DropMaterializedViewGenerator();
 			sequel.addAll( Arrays.asList( dropMViewGen.generateSql( dropMViewStmt, database, null ) ) );
 		} else if ( database instanceof MSSQLDatabase && tableExists( viewName, database ) ) {
-			DropTableStatement dropTableStmt = new DropTableStatement( database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName(), viewName, true );
+			DropTableStatement dropTableStmt = new DropTableStatement( database.getDefaultCatalogName(), database.getDefaultSchemaName(), viewName, true );
 			DropTableGenerator dropTableGen = new DropTableGenerator();
 			sequel.addAll( Arrays.asList( dropTableGen.generateSql( dropTableStmt, database, null ) ) );
 		} // else if there is a view we will use "create or replace view"
 		
 		// if the view exists as a regular view already, we don't actually care.
 		String selectQuery = addSchemaPrefixToFunctionNames( statement.getSelectQuery(), database );
-		CreateViewStatement createViewStmt = new CreateViewStatement( database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName(), statement.getViewName(), selectQuery, true );
+		CreateViewStatement createViewStmt = new CreateViewStatement( database.getDefaultCatalogName(), database.getDefaultSchemaName(), statement.getViewName(), selectQuery, true );
 
 		CreateViewGenerator createViewGen = new CreateViewGenerator();
 		sequel.addAll( Arrays.asList( createViewGen.generateSql( createViewStmt, database, null ) ) );
 
-		log.debug( sequel.stream().map( new java.util.function.Function<Object, String>() {
+		log.fine( sequel.stream().map( new java.util.function.Function<Object, String>() {
 			public String apply( Object o ) {
 				return String.valueOf( o );
 			} }  ).collect( Collectors.joining( "\n" ) ) );
@@ -140,7 +134,7 @@ public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexible
 							if ( s.equalsIgnoreCase( "opentwins" ) ) {
 								schemaName = s;
 								break;
-							} else if ( s.equalsIgnoreCase( database.getLiquibaseSchemaName() ) ) {
+							} else if ( s.equalsIgnoreCase( database.getDefaultSchemaName() ) ) {
 								schemaName = s;
 							}
 						}

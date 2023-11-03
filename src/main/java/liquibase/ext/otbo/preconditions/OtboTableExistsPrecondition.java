@@ -40,8 +40,8 @@ public class OtboTableExistsPrecondition extends OtboPrecondition<TableExistsPre
 	@Override
 	protected TableExistsPrecondition fallback( Database database ) {
 		TableExistsPrecondition redirect = new TableExistsPrecondition();
-		redirect.setCatalogName( database.getLiquibaseCatalogName() );
-		redirect.setSchemaName( database.getLiquibaseSchemaName() );
+		redirect.setCatalogName( database.getDefaultCatalogName() );
+		redirect.setSchemaName( database.getDefaultSchemaName() );
 		redirect.setTableName( getTableName() );
 		return redirect;
 	}
@@ -66,7 +66,7 @@ public class OtboTableExistsPrecondition extends OtboPrecondition<TableExistsPre
 
 	public void check( Database database, DatabaseChangeLog changeLog, ChangeSet changeSet, ChangeExecListener changeExecListener ) throws PreconditionFailedException, PreconditionErrorException {
 		if ( database.getConnection() instanceof OfflineConnection ) {
-			throw new PreconditionFailedException( String.format( "The table '%s.%s' was not found.", database.getLiquibaseSchemaName(), getTableName() ), changeLog, this );
+			throw new PreconditionFailedException( String.format( "The table '%s.%s' was not found.", database.getDefaultSchemaName(), getTableName() ), changeLog, this );
 		}
 		
 		Precondition redirect = redirected( database );
@@ -78,10 +78,10 @@ public class OtboTableExistsPrecondition extends OtboPrecondition<TableExistsPre
 				final String sql = "select count(*) from all_tables where upper(table_name) = upper(?) and upper(owner) = upper(?)";
 				ps = connection.prepareStatement( sql );
 				ps.setString( 1, getTableName() );
-				ps.setString( 2, database.getLiquibaseSchemaName() );
+				ps.setString( 2, database.getDefaultSchemaName() );
 				rs = ps.executeQuery();
 				if ( !rs.next() || rs.getInt( 1 ) <= 0 ) {
-					throw new PreconditionFailedException( String.format( "The table '%s.%s' was not found.", database.getLiquibaseSchemaName(), getTableName() ), changeLog, this );
+					throw new PreconditionFailedException( String.format( "The table '%s.%s' was not found.", database.getDefaultSchemaName(), getTableName() ), changeLog, this );
 				}
 			} catch ( SQLException e ) {
 				throw new PreconditionErrorException( e, changeLog, this );

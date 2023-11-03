@@ -4,7 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import liquibase.Liquibase;
+import liquibase.Scope;
 import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
 import liquibase.changelog.visitor.ChangeExecListener;
@@ -16,7 +16,6 @@ import liquibase.exception.PreconditionErrorException;
 import liquibase.exception.PreconditionFailedException;
 import liquibase.exception.ValidationErrors;
 import liquibase.exception.Warnings;
-import liquibase.logging.LogService;
 import liquibase.logging.Logger;
 import liquibase.parser.core.ParsedNode;
 import liquibase.parser.core.ParsedNodeException;
@@ -26,7 +25,7 @@ import liquibase.resource.ResourceAccessor;
 
 public class OtboPrimaryKeyExistsPrecondition extends OtboPrecondition<PrimaryKeyExistsPrecondition> {
 
-  private static final Logger LOG = LogService.getLog(OtboPrimaryKeyExistsPrecondition.class);
+  private static final Logger LOG = Scope.getCurrentScope().getLog(OtboPrimaryKeyExistsPrecondition.class);
 
 	private String primaryKeyName;
 	private String tableName;
@@ -54,8 +53,8 @@ public class OtboPrimaryKeyExistsPrecondition extends OtboPrecondition<PrimaryKe
 	@Override
 	protected PrimaryKeyExistsPrecondition fallback( Database database ) {
 		PrimaryKeyExistsPrecondition fallback = new PrimaryKeyExistsPrecondition();
-		fallback.setCatalogName( database.getLiquibaseCatalogName() );
-		fallback.setSchemaName( database.getLiquibaseSchemaName() );
+		fallback.setCatalogName( database.getDefaultCatalogName() );
+		fallback.setSchemaName( database.getDefaultSchemaName() );
 		fallback.setTableName( getTableName() );
 		fallback.setPrimaryKeyName( getPrimaryKeyName() );
 		return fallback;
@@ -81,7 +80,7 @@ public class OtboPrimaryKeyExistsPrecondition extends OtboPrecondition<PrimaryKe
 
 	public void check( Database database, DatabaseChangeLog changeLog, ChangeSet changeSet, ChangeExecListener changeExecListener ) throws PreconditionFailedException, PreconditionErrorException {
 		if ( database.getConnection() instanceof OfflineConnection ) {
-			throw new PreconditionFailedException( String.format( "The primary key '%s' was not found on the table '%s.%s'.", getPrimaryKeyName(), database.getLiquibaseSchemaName(), getTableName() ), changeLog, this );
+			throw new PreconditionFailedException( String.format( "The primary key '%s' was not found on the table '%s.%s'.", getPrimaryKeyName(), database.getDefaultSchemaName(), getTableName() ), changeLog, this );
 		}
 		
 		Precondition redirect = redirected( database );
@@ -101,17 +100,17 @@ public class OtboPrimaryKeyExistsPrecondition extends OtboPrecondition<PrimaryKe
 				final String sql = "select constraint_name from all_constraints where table_name = upper(?) and upper(owner) = upper(?) and constraint_type = 'P'";
 				ps = connection.prepareStatement( sql );
 				ps.setString( 1, getTableName() );
-				ps.setString( 2, database.getLiquibaseSchemaName() );
+				ps.setString( 2, database.getDefaultSchemaName() );
 				rs = ps.executeQuery();
 				
 				if ( !rs.next() ) {
-					throw new PreconditionFailedException( String.format( "The primary key '%s' was not found on the table '%s.%s'.", getPrimaryKeyName(), database.getLiquibaseSchemaName(), getTableName() ), changeLog, this );
+					throw new PreconditionFailedException( String.format( "The primary key '%s' was not found on the table '%s.%s'.", getPrimaryKeyName(), database.getDefaultSchemaName(), getTableName() ), changeLog, this );
 				} else {
 					String name = rs.getString( 1 );
 					if ( getPrimaryKeyName() != null && getPrimaryKeyName().length() > 0 ) {
 						// In Liquibase 3.6.3 the requirement is that a primary key is present. It does not have to share the same name as the names are generated and provided by the database.
 						if ( ! name.equalsIgnoreCase( getPrimaryKeyName() ) ) {
-							LOG.warning( String.format( "The primary key '%s' was not found on the table '%s.%s', but instead a primary key '%s' was found.", getPrimaryKeyName(), database.getLiquibaseSchemaName(), getTableName(), name ) );
+							LOG.warning( String.format( "The primary key '%s' was not found on the table '%s.%s', but instead a primary key '%s' was found.", getPrimaryKeyName(), database.getDefaultSchemaName(), getTableName(), name ) );
 						}
 					}
 				}

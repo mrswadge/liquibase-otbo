@@ -14,13 +14,13 @@ public class DropFunctionGenerator extends AbstractSqlGenerator<DropFunctionStat
 		return database instanceof OracleDatabase || database instanceof MSSQLDatabase;
 	}
 	
-	public ValidationErrors validate( DropFunctionStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain ) {
+	public ValidationErrors validate( DropFunctionStatement statement, Database database, SqlGeneratorChain<DropFunctionStatement> sqlGeneratorChain ) {
 		ValidationErrors validationErrors = new ValidationErrors();
 		validationErrors.checkRequiredField( "functionName", statement.getFunctionName() );
 		return validationErrors;
 	}
 	
-	public Sql[] generateSql( DropFunctionStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain ) {
+	public Sql[] generateSql( DropFunctionStatement statement, Database database, SqlGeneratorChain<DropFunctionStatement> sqlGeneratorChain ) {
 		String objectName = statement.getFunctionName();
 		
 		if ( database instanceof MSSQLDatabase ) {

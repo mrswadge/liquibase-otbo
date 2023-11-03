@@ -5,12 +5,11 @@ import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.database.QueryDataSet;
 import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSet;
+import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
-import liquibase.Contexts;
-import liquibase.ext.otbo.changes.testcore.BaseTestCase;
+import liquibase.ext.otbo.test.BaseTestCase;
 
 /**
  * Copied from the Oracle Create Materialized View addon, although I'm not entirely sure of the aim
@@ -35,7 +34,7 @@ public class CreateFlexibleViewDBTest extends BaseTestCase {
 	}
 
 	protected IDataSet getDataSet() throws Exception {
-		loadedDataSet = new FlatXmlDataSet( this.getClass().getClassLoader().getResourceAsStream( "liquibase/ext/otbo/changes/input.xml" ) );
+		loadedDataSet = new FlatXmlDataSetBuilder().build( this.getClass().getClassLoader().getResourceAsStream( "liquibase/ext/otbo/changes/input.xml" ) );
 		return loadedDataSet;
 	}
 
@@ -43,7 +42,7 @@ public class CreateFlexibleViewDBTest extends BaseTestCase {
 	public void testCompare() throws Exception {
 		QueryDataSet actualDataSet = new QueryDataSet( getConnection() );
 
-		liquiBase.update( new Contexts() );
+		update();
 		actualDataSet.addTable( TABLE_NAME, "SELECT * from " + TABLE_NAME );
 		loadedDataSet = getDataSet();
 

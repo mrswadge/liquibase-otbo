@@ -5,23 +5,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import liquibase.Scope;
 import liquibase.database.Database;
 import liquibase.database.core.MSSQLDatabase;
 import liquibase.database.core.OracleDatabase;
 import liquibase.exception.ValidationErrors;
-import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewGenerator;
-import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewStatement;
-import liquibase.ext.otbo.preconditions.OtboMaterializedViewExistsPrecondition;
-import liquibase.logging.LogService;
 import liquibase.logging.Logger;
 import liquibase.sql.Sql;
 import liquibase.sql.UnparsedSql;
 import liquibase.sqlgenerator.SqlGeneratorChain;
-import liquibase.sqlgenerator.core.AbstractSqlGenerator;
-import liquibase.sqlgenerator.core.CreateViewGenerator;
 import liquibase.sqlgenerator.core.DropColumnGenerator;
 import liquibase.sqlgenerator.core.DropDefaultValueGenerator;
-import liquibase.statement.core.CreateViewStatement;
 import liquibase.statement.core.DropColumnStatement;
 import liquibase.statement.core.DropDefaultValueStatement;
 import liquibase.structure.core.Column;
@@ -29,21 +23,21 @@ import liquibase.structure.core.Table;
 
 public class DropColumnCascadeGenerator extends OtboSqlGenerator<DropColumnCascadeStatement> {
 
-	private static final Logger log = LogService.getLog( DropColumnCascadeGenerator.class );
+	private static final Logger log = Scope.getCurrentScope().getLog( DropColumnCascadeGenerator.class );
 
 	@Override
 	public boolean supports( DropColumnCascadeStatement statement, Database database ) {
 		return database instanceof OracleDatabase || database instanceof MSSQLDatabase;
 	}
 
-	public ValidationErrors validate( DropColumnCascadeStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain ) {
+	public ValidationErrors validate( DropColumnCascadeStatement statement, Database database, SqlGeneratorChain<DropColumnCascadeStatement> sqlGeneratorChain ) {
 		ValidationErrors validationErrors = new ValidationErrors();
 		validationErrors.checkRequiredField( "tableName", statement.getTableName() );
 		validationErrors.checkRequiredField( "columnName", statement.getColumnName() );
 		return validationErrors;
 	}
 
-	public Sql[] generateSql( DropColumnCascadeStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain ) {
+	public Sql[] generateSql( DropColumnCascadeStatement statement, Database database, SqlGeneratorChain<DropColumnCascadeStatement> sqlGeneratorChain ) {
 		// check if the view already exists, then formulate a plan from there!
 		String catalogName = statement.getCatalogName();
 		String schemaName = statement.getSchemaName();
@@ -82,7 +76,7 @@ public class DropColumnCascadeGenerator extends OtboSqlGenerator<DropColumnCasca
 		DropColumnGenerator dropColumnGen = new DropColumnGenerator();
 		sequel.addAll( Arrays.asList( dropColumnGen.generateSql( dropColumnStmt, database, null ) ) );
 
-		log.debug( sequel.stream().map( new java.util.function.Function<Object, String>() {
+		log.fine( sequel.stream().map( new java.util.function.Function<Object, String>() {
 			public String apply( Object o ) {
 				return String.valueOf( o );
 			} } ).collect( Collectors.joining( "\n" ) ) );

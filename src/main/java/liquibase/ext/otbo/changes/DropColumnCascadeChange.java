@@ -59,7 +59,7 @@ public class DropColumnCascadeChange extends AbstractChange {
 
 	public SqlStatement[] generateStatements( Database database ) {
 		List<SqlStatement> statements = new ArrayList<SqlStatement>();
-		statements.add( new DropColumnCascadeStatement( database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName(), getTableName(), getColumnName() ) );
+		statements.add( new DropColumnCascadeStatement( database.getDefaultCatalogName(), database.getDefaultSchemaName(), getTableName(), getColumnName() ) );
 		return statements.toArray( new SqlStatement[0] );
 	}
 

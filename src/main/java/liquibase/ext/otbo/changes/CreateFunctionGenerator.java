@@ -17,14 +17,14 @@ public class CreateFunctionGenerator extends AbstractSqlGenerator<CreateFunction
 		return database instanceof OracleDatabase || database instanceof MSSQLDatabase;
 	}
 	
-	public ValidationErrors validate( CreateFunctionStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain ) {
+	public ValidationErrors validate( CreateFunctionStatement statement, Database database, SqlGeneratorChain<CreateFunctionStatement> sqlGeneratorChain ) {
 		ValidationErrors validationErrors = new ValidationErrors();
 		validationErrors.checkRequiredField( "functionName", statement.getFunctionName() );
 		validationErrors.checkRequiredField( "functionBody", statement.getFunctionBody() );
 		return validationErrors;
 	}
 	
-	public Sql[] generateSql( CreateFunctionStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain ) {
+	public Sql[] generateSql( CreateFunctionStatement statement, Database database, SqlGeneratorChain<CreateFunctionStatement> sqlGeneratorChain ) {
 		String sql = statement.getFunctionBody();
 		
 		if ( database instanceof MSSQLDatabase ) {

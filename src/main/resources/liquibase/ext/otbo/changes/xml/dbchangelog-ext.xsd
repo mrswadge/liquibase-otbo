@@ -44,6 +44,20 @@
 		</xsd:complexType>
 	</xsd:element>
 
+	<xsd:element name="createFunction">
+		<xsd:complexType mixed="true">
+			<xsd:attribute name="schemaName" type="xsd:string" />
+			<xsd:attribute name="functionName" type="xsd:string" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="dropFunction">
+		<xsd:complexType>
+			<xsd:attribute name="schemaName" type="xsd:string" />
+			<xsd:attribute name="functionName" type="xsd:string" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
 	<xsd:attributeGroup name="tableNameAttribute">
 		<xsd:attribute name="catalogName" type="xsd:string" />
 		<xsd:attribute name="schemaName" type="xsd:string" />

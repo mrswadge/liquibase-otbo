@@ -9,8 +9,7 @@ import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
 import liquibase.database.core.MSSQLDatabase;
 import liquibase.exception.PreconditionFailedException;
-import liquibase.ext.otbo.preconditions.OtboMaterializedViewExistsPrecondition;
-import liquibase.ext.otbo.preconditions.core.BaseTestCase;
+import liquibase.ext.otbo.test.BaseTestCase;
 
 public class OracleMaterializedViewExistsTest extends BaseTestCase {
 

@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 import liquibase.Liquibase;
+import liquibase.Scope;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
@@ -50,7 +51,7 @@ public class BaseTestCase {
 		liquiBase = new Liquibase( changeLogFile, new ClassLoaderResourceAccessor(), jdbcConnection );
 		liquiBase.dropAll();
 		
-		Executor executor = ExecutorService.getInstance().getExecutor( liquiBase.getDatabase() );
+		Executor executor = Scope.getCurrentScope().getSingleton(ExecutorService.class).getExecutor( "jdbc", liquiBase.getDatabase() );
 		ResultSet rs = null;
 		try {
 			rs = jdbcConnection.getMetaData().getTables( null, liquiBase.getDatabase().getDefaultSchemaName(), "%", new String[] { "MATERIALIZED VIEW" } );

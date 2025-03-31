@@ -60,7 +60,7 @@ public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexible
 			dropMViewStmt.setSchemaName( database.getDefaultSchemaName() );
 			DropMaterializedViewGenerator dropMViewGen = new DropMaterializedViewGenerator();
 			sequel.addAll( Arrays.asList( dropMViewGen.generateSql( dropMViewStmt, database, null ) ) );
-		} else if ( database instanceof MSSQLDatabase && tableExists( viewName, database ) ) {
+		} else if ( tableExists( viewName, database ) ) {
 			DropTableStatement dropTableStmt = new DropTableStatement( database.getDefaultCatalogName(), database.getDefaultSchemaName(), viewName, true );
 			DropTableGenerator dropTableGen = new DropTableGenerator();
 			sequel.addAll( Arrays.asList( dropTableGen.generateSql( dropTableStmt, database, null ) ) );

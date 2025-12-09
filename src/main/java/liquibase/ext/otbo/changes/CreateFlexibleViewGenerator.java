@@ -87,7 +87,7 @@ public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexible
 				Statement statement = ( (JdbcConnection) database.getConnection() ).createStatement();
 				ResultSet resultSet = statement.executeQuery( "SELECT NAME, SCHEMA_NAME(SCHEMA_ID), "
 						+ "(SELECT MAX(PARAMETER_ID) FROM SYS.PARAMETERS P WHERE P.OBJECT_ID = O.OBJECT_ID) "
-						+ "FROM SYS.OBJECTS O WHERE TYPE = 'FN'" );
+						+ "FROM SYS.OBJECTS O WHERE TYPE IN ('FN','TF','IF')" );
 				List parsedSql = Arrays.asList( SqlParser.parse( sql, true, true ).toArray( true ) );
 				Map<Integer, List<String>> schemaMap = new HashMap<>();
 				while ( resultSet.next() ) {

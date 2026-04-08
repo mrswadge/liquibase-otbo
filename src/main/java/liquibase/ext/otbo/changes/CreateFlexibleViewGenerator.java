@@ -46,21 +46,25 @@ public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexible
 	}
 
 	/**
-	 * 1. If there is a materialized view (oracle) or table (mssql only) with the same name as this view, we drop it.
-	 * 2. We can then can create the standard view: 'create or replace force view as ... select 1 from dual' 
-	 * 3. If the environment is set for materialized views, convert all views to materialized views (oracle) or tables (mssql) at the end using the v99.99.99 script.
+	 * 1. If there is a materialized view (oracle) with the same name as this view, drop it.
+	 * 2. If there is a table (oracle or mssql) with the same name as this view, drop it.
+	 * 3. We can then can create the standard view: 'create or replace force view as ... select 1 from dual' 
 	 */
 	public Sql[] generateSql( CreateFlexibleViewStatement statement, Database database, SqlGeneratorChain<CreateFlexibleViewStatement> sqlGeneratorChain ) {
 		// check if the view already exists, then formulate a plan from there!
 		String viewName = statement.getViewName().toUpperCase();
 		List<Sql> sequel = new ArrayList<Sql>();
 
-		if ( materializedViewExists( viewName, database ) ) {
+		// 1. Drop the materialized view if it exists (oracle only).
+		if ( database instanceof OracleDatabase && materializedViewExists( viewName, database ) ) {
 			DropMaterializedViewStatement dropMViewStmt = new DropMaterializedViewStatement( statement.getViewName() );
 			dropMViewStmt.setSchemaName( database.getDefaultSchemaName() );
 			DropMaterializedViewGenerator dropMViewGen = new DropMaterializedViewGenerator();
 			sequel.addAll( Arrays.asList( dropMViewGen.generateSql( dropMViewStmt, database, null ) ) );
-		} else if ( database instanceof MSSQLDatabase && tableExists( viewName, database ) ) {
+		}
+
+		// 2. Drop the table if it exists (oracle or mssql).
+		if ( tableExists( viewName, database ) ) {
 			DropTableStatement dropTableStmt = new DropTableStatement( database.getDefaultCatalogName(), database.getDefaultSchemaName(), viewName, true );
 			DropTableGenerator dropTableGen = new DropTableGenerator();
 			sequel.addAll( Arrays.asList( dropTableGen.generateSql( dropTableStmt, database, null ) ) );
@@ -68,6 +72,8 @@ public class CreateFlexibleViewGenerator extends OtboSqlGenerator<CreateFlexible
 		
 		// if the view exists as a regular view already, we don't actually care.
 		String selectQuery = addSchemaPrefixToFunctionNames( statement.getSelectQuery(), database );
+		
+		// 3. Create the standard view.
 		CreateViewStatement createViewStmt = new CreateViewStatement( database.getDefaultCatalogName(), database.getDefaultSchemaName(), statement.getViewName(), selectQuery, true );
 
 		CreateViewGenerator createViewGen = new CreateViewGenerator();
